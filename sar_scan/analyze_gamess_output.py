@@ -16,10 +16,6 @@ def normalize_angle(angle):
     return normalized
 
 def calculate_periodic_deviation(angle1, angle2):
-    """
-    Calculates the minimum deviation between two angles, considering periodic boundaries.
-    Angles are expected to be in degrees.
-    """
     norm_angle1 = normalize_angle(angle1)
     norm_angle2 = normalize_angle(angle2)
 
@@ -28,12 +24,6 @@ def calculate_periodic_deviation(angle1, angle2):
 
 
 def parse_initial_dihedrals_from_filename(filename):
-    """
-    Parses initial PHI, PSI, OMEGA values from a filename like
-    'phip040_psim160_omegap170.out'.
-    Assumes 'p' for positive, 'm' for negative.
-    Returns a dictionary with 'phi', 'psi', 'omega' as floats, or None if not found.
-    """
     initial_dihedrals = {}
 
     phi_match = re.search(r'phi([pm])(\d+)', filename, re.IGNORECASE)
@@ -62,15 +52,7 @@ def parse_initial_dihedrals_from_filename(filename):
 
 
 def extract_and_evaluate_file(filepath, deviation_threshold):
-    """
-    Processes a single .out file, extracts final dihedrals and energy,
-    parses initial dihedrals from filename, compares them, and determines if flagged.
-    
-    Returns a tuple: (extracted_data_dict, flagged_data_dict_or_None)
-    - extracted_data_dict: Contains filename, final PHI, PSI, OMEGA, ENERGY.
-    - flagged_data_dict_or_None: Contains detailed deviation info if flagged, else None.
-    """
-    # Initialize all values to None
+
     phi_val = None
     psi_val = None
     omega_val = None
@@ -93,7 +75,7 @@ def extract_and_evaluate_file(filepath, deviation_threshold):
                         # Conversion factor: 1 Hartree = 627.5095 kcal/mol
                         final_energy = energy_in_hartrees * 627.5095
 
-                # Original logic to find dihedral values
+               
                 if "RESTRAINTS STATUS" in line:
                     in_restraint_block = True
                     continue 
@@ -113,7 +95,7 @@ def extract_and_evaluate_file(filepath, deviation_threshold):
                                 psi_val = value
                             elif idx1 == '1' and idx2 == '2' and idx3 == '4' and idx4 == '6':
                                 omega_val = value
-                    # The block to stop reading restraints is still useful
+                    
                     elif "MAXIMUM GRADIENT" in line or "RMS GRADIENT" in line:
                         in_restraint_block = False
                         
@@ -121,7 +103,7 @@ def extract_and_evaluate_file(filepath, deviation_threshold):
         print(f"Error parsing file {filepath}: {e}", file=sys.stderr)
         return None, None # Return None for both if parsing fails
 
-    # Prepare extracted data for the first output file
+  
     extracted_data = {
         'filename': file_basename,
         'phi': phi_val,
@@ -130,13 +112,12 @@ def extract_and_evaluate_file(filepath, deviation_threshold):
         'energy': final_energy
     }
 
-    # If GAMESS-calculated values for dihedrals are not all found, we cannot perform comparison
-    # but we still return the extracted_data (which will have None for missing values)
+  
     if phi_val is None or psi_val is None or omega_val is None:
         print(f"Warning: Missing PHI/PSI/OMEGA values in {filepath}. Skipping deviation check.", file=sys.stderr)
         return extracted_data, None
 
-    # Now, perform the comparison for flagging
+   
     initial_dihedrals = parse_initial_dihedrals_from_filename(file_basename)
     initial_phi = initial_dihedrals.get('phi')
     initial_psi = initial_dihedrals.get('psi')
@@ -145,7 +126,7 @@ def extract_and_evaluate_file(filepath, deviation_threshold):
     deviations = {}
     is_flagged = False
 
-    # Compare PHI with periodic boundary conditions
+    
     if initial_phi is not None:
         dev_phi = calculate_periodic_deviation(phi_val, initial_phi)
         deviations['phi'] = dev_phi
@@ -154,7 +135,7 @@ def extract_and_evaluate_file(filepath, deviation_threshold):
     else:
         deviations['phi'] = "N/A (initial PHI not found)"
 
-    # Compare PSI with periodic boundary conditions
+    
     if initial_psi is not None:
         dev_psi = calculate_periodic_deviation(psi_val, initial_psi)
         deviations['psi'] = dev_psi
@@ -163,7 +144,7 @@ def extract_and_evaluate_file(filepath, deviation_threshold):
     else:
         deviations['psi'] = "N/A (initial PSI not found)"
 
-    # Compare OMEGA with periodic boundary conditions
+    
     if initial_omega is not None:
         dev_omega = calculate_periodic_deviation(omega_val, initial_omega)
         deviations['omega'] = dev_omega
@@ -195,10 +176,7 @@ def main(target_directory=".",
          all_data_output_filename="extracted_restraint_values.csv",
          flagged_output_filename="flagged_deviations.csv",
          deviation_threshold=10.0):
-    """
-    Main function to find .out files, extract all data, compare dihedrals,
-    and write all extracted data (sorted) and flagged files to separate CSVs.
-    """
+  
     if not os.path.isdir(target_directory):
         print(f"Error: Target directory '{target_directory}' not found.", file=sys.stderr)
         sys.exit(1)
@@ -224,16 +202,15 @@ def main(target_directory=".",
     for filepath in all_out_files:
         extracted_entry, flagged_entry = extract_and_evaluate_file(filepath, deviation_threshold)
         
-        # If an entry is flagged, it only goes to the flagged list.
-        # Otherwise, it goes to the main results list.
+       
         if flagged_entry:
             flagged_files_data.append(flagged_entry)
             print(f"Flagged: {flagged_entry['filename']} (Deviations: PHI={flagged_entry['deviation_phi']}, PSI={flagged_entry['deviation_psi']}, OMEGA={flagged_entry['deviation_omega']})")
         elif extracted_entry:
-            # Only add to the main list if it was not flagged
+            
             non_flagged_results.append(extracted_entry)
 
-    # --- Write the non-flagged results (sorted by OMEGA) ---
+  
     if non_flagged_results:
         # Sort the data by OMEGA value (increasing order)
         try:
@@ -256,7 +233,7 @@ def main(target_directory=".",
     else:
         print("\nNo valid, non-flagged data was found to write.")
 
-    # --- Write flagged files data ---
+  
     if flagged_files_data:
         print(f"\nWriting {len(flagged_files_data)} flagged files to {flagged_output_filename}")
         try:
@@ -276,13 +253,13 @@ def main(target_directory=".",
     print("Analysis complete.")
 
 if __name__ == "__main__":
-    # Command-line argument usage:
-    # python combined_dihedral_analysis.py [target_directory] [all_data_output_file] [flagged_output_file] [deviation_threshold]
+
+    # python anaylze_gamess_output.py [target_directory] [all_data_output_file] [flagged_output_file] [deviation_threshold]
 
     target_dir_arg = "." # Default to current directory
-    all_data_output_arg = "extracted_restraint_values.csv" # Default output for all data
-    flagged_output_arg = "flagged_deviations.csv" # Default output for flagged data
-    deviation_limit = 10.0 # Default deviation threshold
+    all_data_output_arg = "extracted_restraint_values.csv" 
+    flagged_output_arg = "flagged_deviations.csv" 
+    deviation_limit = 10.0 
 
     if len(sys.argv) > 1:
         target_dir_arg = sys.argv[1]
