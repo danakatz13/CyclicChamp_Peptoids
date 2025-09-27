@@ -48,5 +48,5 @@ if nonmatching_files:
         for filename in nonmatching_files:
             f.write(filename + "\n")
 
-print(f"\nDone! {len(nonmatching_files)} files did NOT match. Saved to {nonmatches_file}.")
+print(f"\n {len(nonmatching_files)} files did NOT match. Saved to {nonmatches_file}.")
 
