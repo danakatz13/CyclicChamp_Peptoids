@@ -73,23 +73,18 @@ def get_dihedrals_from_pdb(mol, conf):
 
 
 def write_bond_and_angle_table(output_csv, pdb_file_list, all_bond_data, all_angle_data):
-    """
-    Writes both bond lengths and bond angles into one pivoted table.
-    Rows = bond or angle identifiers
-    Columns = pdb structures
-    """
-    # Collect all keys
+    
     all_bonds = sorted({k for d in all_bond_data.values() for k in d})
     all_angles = sorted({k for d in all_angle_data.values() for k in d})
 
     with open(output_csv, "w", newline="") as f:
         writer = csv.writer(f)
 
-        # Header row: Type + ID + PDB filenames
+       
         header = ["Type", "ID"] + [os.path.basename(p) for p in pdb_file_list]
         writer.writerow(header)
 
-        # Write bond lengths
+        
         for bond in all_bonds:
             row = ["Bond", bond]
             for pdb_path in pdb_file_list:
@@ -99,7 +94,7 @@ def write_bond_and_angle_table(output_csv, pdb_file_list, all_bond_data, all_ang
                 row.append(value)
             writer.writerow(row)
 
-        # Write bond angles
+        
         for angle in all_angles:
             row = ["Angle", angle]
             for pdb_path in pdb_file_list:
@@ -119,7 +114,7 @@ import csv
 from rdkit import Chem, RDLogger
 
 
-# ensure output folder exists
+
 output_folder = "./output"
 os.makedirs(output_folder, exist_ok=True)
 
@@ -128,7 +123,7 @@ os.makedirs(output_folder, exist_ok=True)
 RDLogger.DisableLog('rdApp.*')
 
 
-# set up OpenBabel conversion: GAMESS output (.out) → PDB
+
 conv = openbabel.OBConversion()
 conv.SetInAndOutFormats("gamout", "pdb")
 
@@ -201,11 +196,11 @@ if __name__ == "__main__":
         all_angle_data[pdb_path] = get_bond_angles_from_pdb(mol, conf)
         all_dihedral_data[pdb_path] = get_dihedrals_from_pdb(mol, conf)
 
-    # ✅ This check happens AFTER the loop
+    
     if not any([all_bond_data, all_angle_data]):
         print("\nNo data was extracted. CSV file will not be created.", file=sys.stderr)
         sys.exit(1)
 
-    # Write combined output
+
     write_bond_and_angle_table(output_csv, pdb_file_list, all_bond_data, all_angle_data)
 
