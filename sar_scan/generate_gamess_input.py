@@ -7,7 +7,6 @@ from PIL import Image
 from rdkit import Chem
 from rdkit.Chem import AllChem, Draw, rdDepictor, rdMolTransforms
 
-# Reaction SMARTS definitions
 reaction_smarts_1 = '[N;H2:1]>>[C][C](=[O])[N:1][C:2][C:3](=[O:4])[N:9]([C:10])[C:11]'
 reaction_smarts_2 = '[O][C](=[O])[C][N:1]>>[C][C](=[O])[N:1][C:2][C:3](=[O:4])[N:9]([C:10])[C:11]'
 reaction_smarts_3 = '[C](=[O])[C][N:1]>>[C][C](=[O])[N:1][C:2][C:3](=[O:4])[N:9]([C:10])[C:11]'
@@ -54,14 +53,14 @@ def main():
     parser.add_argument('--output', required=True, help='Output folder name')
     args = parser.parse_args()
 
-    # 1) Apply reaction SMARTS
+  
     smiles_clean = args.smiles.replace("*", "")
     product_smiles = apply_reactions(smiles_clean)
     if product_smiles is None:
         print("No product generated from reactions.")
         return
 
-    # 2) Prepare 3D mol and show indices
+
     mol = prepare_mol(product_smiles)
     if mol is None:
         print("Failed to generate 3D structure.")
@@ -75,7 +74,7 @@ def main():
     psi_atoms = [int(x) for x in input("Enter psi atoms (4 indices): ").split()]
     omega_atoms = [int(x) for x in input("Enter omega atoms (4 indices): ").split()]
 
-    # Convert to 1-based for GAMESS
+
     phi_atoms_gamess   = [i + 1 for i in phi_atoms]
     psi_atoms_gamess   = [i + 1 for i in psi_atoms]
     omega_atoms_gamess = [i + 1 for i in omega_atoms]
